@@ -1,9 +1,11 @@
 #!/usr/bin/env python 2.7
 
-import re,os,mimetypes,json,string,random
+import re,os,mimetypes,string,random
 from BaseHTTPServer import HTTPServer,BaseHTTPRequestHandler
+from json import dumps as json_encode,loads as json_parse
 
-API_REQUEST_REGEX=re.compile("\/api\/.*")
+API_REQUEST_REGEX=re.compile(r"\/api\/.*")
+VIDEO_STRING_REGEX=re.compile(r"(youtube|twitch)#(video|stream):\/\/([a-zA-Z0-9]+)\/?(\d+)?")
 
 SERVER_PORT=6901
 SERVER_VERSION="1.0"
@@ -16,9 +18,63 @@ def gen_key(length=32):
         key+=random.choice(KEY_CHARS)
     return key
 
+class Video:
+    host="" #youtube or twitch
+    vid_type="" #video or stream (stream is only used for twitch)
+    vid_id="" #the video id for vid_type=video, or the channel id for vid_type=stream
+    timestamp="" #time in seconds from start. can be empty.
+
+    def __init__(self,base_string=None,host=None,vid_type=None,vid_id=None,timestamp=None):
+        if base_string!=None:
+            match=VIDEO_STRING_REGEX.match(base_string)
+            if not match:
+                return None #TODO: Make a better way of returning from bad data
+            self.host=match.group(1)
+            self.vid_type=match.group(2)
+            self.vid_id=match.group(3)
+            self.timestamp=match.group(4)
+
+        if host!=None:
+            self.host=str(host)
+        if vid_type!=None:
+            self.vid_type=str(vid_type)
+        if vid_id!=None:
+            self.vid_id=str(vid_id)
+        if timestamp!=None:
+            self.timestamp=str(timestamp)
+
+        self.sanity_check()
+
+    def sanity_check(self):
+        if self.host=="youtube":
+            self.vid_type="video"
+        if self.vid_type=="stream":
+            self.timestamp=""
+
+    def __repr__(self):
+        return self.host+"#"+self.vid_type+"://"+self.vid_id+"/"+self.timestamp
+    def __str__(self):
+        return self.__repr__()
+    
+
 class WAYWServer(HTTPServer):
     client_key=""
     control_key=""
+
+    queue=[
+        Video(base_string="youtube#video://iPXqJ6zJxjU/")
+        Video(base_string="youtube#video://0jx3V4-_iXU/")
+    ]
+    queue_delta=[]
+    
+    playback_state={
+        "paused":True, #true or false
+        "volume":1.0, #0.0->1.0 
+        "quality":"default", #1080,720,480,360,240,default
+        "timestamp":0, #seconds since the start
+        "newClientRequest":False
+    }
+    playback_state_delta={}
 
     def __init__(self):
         HTTPServer.__init__(self,('',SERVER_PORT),WAYWRequestHandler)
@@ -87,7 +143,6 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             "/api/queue/":self.get_queue,
             "/api/queue/length":self.get_queue_length,
             re.compile(r"\/api\/queue\/(\d+)\/"):self.get_queue_item,
-            "/api/queue/events/":self.get_queue_events
         }, return_file=True)
     def do_POST(self):
         self.do_request({
@@ -97,11 +152,14 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         })
     def do_PUT(self):
         self.do_request({
-            re.compile(r"\/api\/queue\/(\d+)\/(\d+)\/"):self.reposition_queue_item_from_match
+            re.compile(r"\/api\/queue\/(\d+)\/(\d+)\/"):self.reposition_queue_item_from_match,
+            re.compile(r"\/api\/queue\/(\d+)\/timestamp\/"):self.change_queue_item_timestamp,
         })
     def do_DELETE(self):
         self.do_request({
             "/api/auth/client/":self.clear_client_key,
+            "/api/auth/control/":self.clear_control_key,
+            
             re.compile(r"\/api\/queue\/(\d+)\/"):self.remove_queue_item
         })
     def do_HEAD(self):
@@ -144,7 +202,8 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         self.send_error(404)
 
     def clamp_queue_index(self,index):
-        #TODO: Use the queue length to clamp the index to under that.
+        if index>=len(self.server.queue):
+            return len(self.server.queue)-1
         return index
 
     """
@@ -167,42 +226,37 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.wfile.write(self.server.gen_client_key())
         else:
-            #TODO: Add "new-client-pending" to the playback state
+            self.server.playback_state_delta["newClientRequested"]=(not self.server.playback_state["newClientRequested"])
+            self.server.playback_state["newClientRequested"]=True
             self.send_error(409)
     def get_control_key(self):
-        self.send_response(200)
-        self.wfile.write(self.server.get_control_key())
+        if self.server.is_control_key(""):
+            self.send_response(200)
+            self.wfile.write(self.server.get_control_key())
+        else:
+            self.send_error(409)
     def get_playback_state(self):
         self.require_either_auth()
-        #TODO: Send the playback state as JSON
         self.send_response(200)
-        self.wfile.write("{}")
+        self.wfile.write(json_encode(self.server.playback_state))
     def get_playback_events(self):
         self.require_client_auth()
-        #TODO: Send the playback state delta as JSON
         self.send_response(200)
-        self.wfile.write("{}")
+        self.wfile.write(json_encode(self.server.playback_state_delta))
+        self.server.playback_state_delta={}
     def get_queue(self):
         self.require_either_auth()
-        #TODO: Send the whole queue as JSON
         self.send_response(200)
-        self.wfile.write("{}")
+        self.wfile.write(json_encode(self.server.queue))
     def get_queue_length(self):
         self.require_either_auth()
-        #TODO: Send the queue length
         self.send_response(200)
-        self.wfile.write("0")
+        self.wfile.write(str(len(self.server.queue)))
     def get_queue_item(self,match):
         self.require_either_auth()
         index=self.clamp_queue_index(int(match.group(1)))
-        #TODO: Send the specified item in the queue as JSON
         self.send_response(200)
-        self.wfile.write("{}")
-    def get_queue_events(self):
-        self.require_client_auth()
-        #TODO: Send the queue state delta as JSON
-        self.send_response(200)
-        self.wfile.write("{}")
+        self.wfile.write(json_encode(self.server.queue(index)))
 
     """
     
@@ -219,7 +273,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         self.send_response(204)
     def insert_video_in_queue(self,match):
         self.add_video_to_queue()
-        self.reposition_queue_item(-1,self.clamp_queue_index(int(match.group(1))))
+        self.reposition_queue_item(-1,int(match.group(1)))
 
     """
 
@@ -228,13 +282,21 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
     """
     def reposition_queue_item_from_match(self,match):
         self.require_control_auth()
-        self.reposition_queue_item(self.clamp_queue_index(int(match.group(1))),self.clamp_queue_index(int(match.group(2))))
+        self.reposition_queue_item(int(match.group(1)),int(match.group(2)))
         self.send_response(204)
     def reposition_queue_item(self,index1,index2):
+        index1=self.clamp_queue_index(index1)
+        index2=self.clamp_queue_index(index2)
         if index1==index2:
             return
-        #TODO: Move item at index1 to index2
+        self.server.queue.insert(index2,self.server.queue.pop(index2))
 
+    def change_queue_item_timestamp(self,match):
+        self.require_client_auth()
+        index=self.clamp_queue_index(int(match.group(1)))
+        #TODO: Modify the timestamp for the video at index
+
+    
     """
 
     DELETE FUNCTIONS
@@ -243,6 +305,10 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
     def clear_client_key(self):
         self.require_client_auth()
         self.server.client_key=""
+        self.send_response(204)
+    def clear_client_key(self):
+        self.require_control_auth()
+        self.server.control_key=""
         self.send_response(204)
     def remove_queue_item(self,match):
         self.require_control_auth()
