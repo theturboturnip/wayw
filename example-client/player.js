@@ -62,7 +62,7 @@ youtubePlayer={
 	onStateChange:function(event){
 		if (event.data == YT.PlayerState.PLAYING && !youtubePlayer.hasPlayed){
 			setTimeout(function(){
-				if (abs(youtubePlayer.YTPlayerObject.getCurrentTime()-youtubePlayer.videoObject.timestamp)>5)
+				if (Math.abs(youtubePlayer.YTPlayerObject.getCurrentTime()-youtubePlayer.videoObject.timestamp)>5)
 					youtubePlayer.YTPlayerObject.seekTo(youtubePlayer.videoObject.timestamp,true);
 			},100);
 			youtubePlayer.hasPlayed=true;
