@@ -20,12 +20,21 @@ The state of playback is returned from the server as a JSON object which can hav
 The change in state will be returned as a JSON object which can have any of the previous attributes.
 
 ## Queue
-The queue will be returned from the server as a JSON array i.e.
+The queue will be returned from the server as a JSON array of video objects i.e.
 
 ```javascript
 [
-	"youtube#video://iPXqJ6zJxjU/",
-	"twitch#video://166499238/209"
+	{
+		service:"youtube",
+		type:"video",
+		id:"iPXqJ6zJxjU"
+	},
+	{
+		service:"twitch",
+		type:"video",
+		id:"166499238",
+		timestamp:209
+	}
 ]
 ```
 
