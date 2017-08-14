@@ -66,7 +66,7 @@ To submit a request with client authentication, use basic HTTP authentication us
 
 ### PUT
 
-	/api/queue/%d/timestamp/ **[REQUIRES CLIENT AUTH]** : Modifies the timestamp for a video in the queue.
+	/api/queue/%d/timestamp/%d **[REQUIRES CLIENT AUTH]** : Modifies the timestamp for a video in the queue.
 	/api/queue/%d/%d/ **[REQUIRES CONTROL AUTH]** : Move an item in the queue from the first argument to the second argument.
 
 ### DELETE

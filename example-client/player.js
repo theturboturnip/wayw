@@ -55,6 +55,9 @@ youtubePlayer={
 		//console.log("seeking to "+seconds);
 		youtubePlayer.YTPlayerObject.seekTo(seconds);
 	},
+	currentTime:function(){
+		return youtubePlayer.YTPlayerObject.getCurrentTime();
+	},
 
 	onStateChange:function(event){
 		if (event.data == YT.PlayerState.PLAYING && !youtubePlayer.hasPlayed){
