@@ -146,9 +146,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             re.compile(r"\/api\/queue\/(\d+)\/"):self.remove_queue_item
         })
     def do_HEAD(self):
-        self.do_request({
-            "/api/queue/shift/":self.increment_queue,
-        },return_file=True)
+        self.do_request({},return_file=True)
 
     def do_request(self,api_def,return_file=False):
         print "\nNew Request"
@@ -196,7 +194,9 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         return index
 
     def positive_response(self):
+        #HACK: Set the content-type as text to avoid any XML parsing errors
         self.send_response(200)
+        self.send_header("content-type","text/text")
         self.end_headers()
 
     """
@@ -329,15 +329,19 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         self.server.client_key=""
         self.server.playback_state["newClientRequested"]=False
         self.server.playback_state_delta["newClientRequested"]=False
+        self.server.playback_state["paused"]=True
+        self.server.playback_state_delta["paused"]=True
         self.send_response(204)
     def clear_control_key(self):
         self.require_control_auth()
         self.server.control_key=""
         self.send_response(204)
     def remove_queue_item(self,match):
-        self.require_control_auth()
+        self.require_either_auth()
         index=self.clamp_queue_index(int(match.group(1)))
-        self.server.pop(index)
+        print self.server.queue,self.server
+        self.server.queue.pop(index)
+        self.send_response(204)
 
     """
 

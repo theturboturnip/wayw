@@ -3,7 +3,7 @@ function request(method,apiPath,auth,success,POSTdata){
 		method:method,
 		url:apiPath,
 		success:success,
-		//dataType:"json",
+		dataType:"text",
 	};
 	if (method=="POST" && POSTdata!=undefined)
 		ajax.data=POSTdata;

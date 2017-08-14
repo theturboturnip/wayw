@@ -1,5 +1,6 @@
 registerInterval=-1;
 playbackStateInterval=-1;
+playbackEventInterval=-1;
 auth={};
 
 function beginAttemptRegister(){
@@ -21,30 +22,56 @@ function acceptClientKey(response){
 	$("span").html("We're the client!");
 
 	$("#controls").show();
-	
-	playbackStateInterval=setInterval(checkState,100);
+
+	request("GET","/api/queue/0",auth,getVideoToPlay);
+}
+
+function getVideoToPlay(response){
+	console.log(response);
+	var video=JSON.parse(response);
+	console.log(video);
+	playVideo(video,getNextVideo);
+
+	if (playbackStateInterval==-1)
+		playbackStateInterval=setInterval(checkState,1000);
+	if (playbackEventInterval==-1)
+		playbackEventInterval=setInterval(checkEvents,100);
+}
+function getNextVideo(){
+	request("DELETE","/api/queue/0/",auth,function(){
+		request("GET","/api/queue/0",auth,getVideoToPlay);
+	});
+	clearInterval(playbackStateInterval);
+	playbackStateInterval=-1;
+	clearInterval(playbackEventInterval);
+	playbackEventInterval=-1;
 }
 
 function checkState(){
-	request("GET","/api/playback/state",auth,getState);
+	request("GET","/api/playback/state",auth,applyState);
 }
-function getState(response){
+function checkEvents(){
+	request("GET","/api/playback/events",auth,applyEvents);
+}
+function applyState(response){
 	var state=JSON.parse(response);
 	if (state.newClientRequested==true){
 		$("span").html("Someone wants the client key");
 		requestDeleteClientKey();
+		state.paused=true;
 	}
 
-	$("#paused-checkbox").prop("checked",state.paused);
-	$("#volume-range").val(100*state.volume);
-	var val=0;
-	var selector=document.getElementById("quality-select");
-	for (var i=0;i<selector.options.length;i+=1){
-		if (selector.options[i].value==state.quality.trim())
-			val=i;
-		console.log(selector.options[i].value,state.quality);
-	}
-	selector.selectedIndex=val;
+	player.setPaused(state.paused);
+	player.setVolume(state.volume);
+	//TODO: Set quality, timestamp
+}
+function applyEvents(response){
+	var events=JSON.parse(response);
+	if (events.paused!=undefined)
+		player.setPaused(events.paused);
+	if (events.volume!=undefined)
+		player.setVolume(events.volume);
+	//TODO: Set quality, timestamp
 }
 function requestDeleteClientKey(){
 	request("DELETE","/api/auth/client",auth,giveUpClientKey);

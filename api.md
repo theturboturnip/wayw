@@ -74,11 +74,7 @@ To submit a request with client authentication, use basic HTTP authentication us
 	/api/auth/client/ **[REQUIRES CLIENT AUTH]** : Resets the client key so a new client can take the video.
 	/api/auth/control/ **[REQUIRES CONTROL AUTH]** : Resets the control key so a new controller can take control.
 
-	/api/queue/%d/ **[REQUIRES CONTROL AUTH]** : Removes the item at the specified index in the queue from the queue.
-
-### HEAD
-
-	/api/queue/shift/ **[REQUIRES CLIENT AUTH]** : Removes the item at index 0 of the queue, and returns the new video to play. Equivalent to DELETE /api/queue/0 and GET /api/queue/0, but doesn't require control auth. 
+	/api/queue/%d/ **[REQUIRES CLIENT/CONTROL AUTH]** : Removes the item at the specified index in the queue from the queue.
 
 
 ## NOTES
