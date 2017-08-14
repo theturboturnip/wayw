@@ -1,0 +1,29 @@
+<html>
+	<head>
+		<title>WAYW Control</title>
+
+		<script src="/global-requests.js"></script>
+		<script src="./control.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	</head>
+	<body onunload="relinquishControl();">
+		<span id="message">No Control</span>
+		<button onclick="requestControl();" id="request-control-button">Request Control</button>
+		<button onclick="relinquishControl();" id="relinquish-control-button" disabled>Relinquish Control</button>
+		<br><br>
+		<div id="controls" style="display:none">
+		<label><input id="paused-checkbox" type="checkbox" onchange="updatePaused(this.checked);">Paused</label>
+		<br>
+		<label><input id="volume-range" type="range" onchange="updateVolume(this.value/100.0);">Volume</label>
+		<br>
+		<label><select id="quality-select" onchange="updateQuality(this.options[this.selectedIndex].value);">
+			<option value="default">Default</option>
+			<option value="low">Low</option>
+			<option value="medium">Medium</option>
+			<option value="high">High</option>
+		</select>
+		Quality
+		</label>
+		</div>
+	</body>
+</html>

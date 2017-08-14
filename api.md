@@ -1,17 +1,12 @@
 # WAYW API Definition
 
 ## Videos
-A video is defined as a string with the following parts:
-1. The Supplier (Can be `youtube#video`,`twitch#video`,`twitch#stream`. YouTube livestreams can be accessed with `youtube#video`.)
-2. "://"
-3. The ID (Either the video ID or the streamer name if it's a livestream)
-4. "/"
-4. [OPTIONAL] The Timestamp in seconds since the start of the video.
+A video is defined as an object with 4 properties:
 
-Examples:
-`youtube#video://iPXqJ6zJxjU/` : A YouTube video with ID iPXqJ6zJxjU
-`twitch#video://166499238/209` : A Twitch VOD with ID 166499238, starting 209 seconds in.
-`twitch#stream://shenpai/` : A Twitch livestream from channel Shenpai.
+1. service (string, can be youtube or twitch)
+2. type (string, can be video or stream. can only be stream if the service is twitch)
+3. id (string, the id of the video/vod/streamer being watched)
+4. timestamp (int, the number of seconds in to resume from)
 
 ## Playback State
 The state of playback is returned from the server as a JSON object which can have the following attributes:
@@ -20,7 +15,7 @@ The state of playback is returned from the server as a JSON object which can hav
 2. volume (float between 0 and 1)
 3. quality (string, can be "high","medium","low", or "default" for player-controlled auto adjustment)
 4. timestamp (int)
-5. newClientRequest (bool). if true, the client should relinquish the video to a new client by PUT-ing the current timestamp on video 0 and DELETE-ing the client key.
+5. newClientRequested (bool). if true, the client should relinquish the video to a new client by PUT-ing the current timestamp on video 0 and DELETE-ing the client key.
 
 The change in state will be returned as a JSON object which can have any of the previous attributes.
 
@@ -33,6 +28,9 @@ The queue will be returned from the server as a JSON array i.e.
 	"twitch#video://166499238/209"
 ]
 ```
+
+## Request Authentication
+To submit a request with client authentication, use basic HTTP authentication using the username Client and the client key as the password. The same process is used for control authentication, with the username Control and the control key as the password.
 
 ## Requests
 ### GET

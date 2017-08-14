@@ -1,0 +1,29 @@
+<html>
+	<head>
+		<title>WAYW Client</title>
+
+		<script src="/global-requests.js"></script>
+		<script src="./client.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	</head>
+	<body onunload="requestDeleteClientKey();">
+		<span id="message">Not the Client</span>
+		<br>
+		<button onclick="beginAttemptRegister();">Become the Client!</button>
+		<br><br>
+		<div id="controls" style="display:none">
+		<label><input id="paused-checkbox" type="checkbox" disabled>Paused</label>
+		<br>
+		<label><input id="volume-range" type="range" disabled>Volume</label>
+		<br>
+		<label><select id="quality-select" disabled>
+			<option value="default">Default</option>
+			<option value="low">Low</option>
+			<option value="medium">Medium</option>
+			<option value="high">High</option>
+		</select>
+		Quality
+		</label>
+		</div>
+	</body>
+</html>
