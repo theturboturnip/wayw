@@ -18,15 +18,13 @@ youtubePlayer={
 				videoId:video.id,
 				playerVars:{
 					autoplay:0,
-					enablejsapi:1,
+					//enablejsapi:1,
 					modestbranding:1,
-					origin:"localhost",
+					//origin:"localhost",
 					start:youtubePlayer.videoObject.timestamp
 				},
 				events:{
-					"onReady":function(){
-						//youtubePlayer.YTPlayerObject.seekTo(youtubePlayer.videoObject.timestamp,true);
-					},
+					"onReady":function(){},
 					"onStateChange":youtubePlayer.onStateChange
 				},
 			}
@@ -39,6 +37,9 @@ youtubePlayer={
 		youtubePlayer.videoEndCallback=undefined;
 		youtubePlayer.videoObject=undefined;
 		youtubePlayer.hasPlayed=false;
+		youtubePlayer.currentPlayerState=-2;
+		player={};
+		$("#player-parent").html("<div id='player'></div>");
 	},
 
 	setPaused:function(paused){
@@ -53,7 +54,7 @@ youtubePlayer={
 	},
 	seek:function(seconds){
 		//console.log("seeking to "+seconds);
-		youtubePlayer.YTPlayerObject.seekTo(seconds);
+		youtubePlayer.YTPlayerObject.seekTo(seconds,true);
 	},
 	currentTime:function(){
 		return youtubePlayer.YTPlayerObject.getCurrentTime();
@@ -81,5 +82,5 @@ function playVideo(video,onVideoEnd){
 	else
 		return;
 	player.create(video,onVideoEnd);
-	$("#player").show();
+	$("#player-parent").show();
 }

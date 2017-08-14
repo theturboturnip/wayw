@@ -11,7 +11,7 @@
 		<script src="./player.js"></script>
 
 	</head>
-	<body onunload="requestDeleteClientKey();">
+	<body onunload="_requestDeleteClientKey();">
 		<span id="message">Not the Client</span>
 		<br>
 		<button onclick="beginAttemptRegister();">Become the Client!</button>
@@ -32,6 +32,8 @@
 		</div>
 
 
-		<div id="player" style="position:absolute;left:0;right:0;top:0;bottom:0;background-color:#000;display:none;"></div>
+		<div id="player-parent" style="position:absolute;left:0;right:0;top:0;bottom:0;background-color:#000;display:none;">
+			<div id="player"></div>
+		</div>
 	</body>
 </html>

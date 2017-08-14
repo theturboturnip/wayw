@@ -28,13 +28,13 @@ function acceptClientKey(response){
 }
 
 function getVideoToPlay(response){
-	console.log(response);
+	console.log("Got next video");
 	var video=JSON.parse(response);
 	console.log(video);
 	playVideo(video,getNextVideo);
 
 	if (playbackStateInterval==-1)
-		playbackStateInterval=setInterval(checkState,1000);
+		playbackStateInterval=setInterval(checkState,1*1000);
 	if (playbackEventInterval==-1)
 		playbackEventInterval=setInterval(checkEvents,100);
 	if (setTimestampInterval==-1)
@@ -71,21 +71,26 @@ function applyState(response){
 
 	player.setPaused(state.paused);
 	player.setVolume(state.volume);
-	//TODO: Set quality, timestamp
+	//TODO: Set quality
+	/*if (Math.abs(state.timestamp-player.currentTime())>5)
+		player.seek(state.timestamp);*/
 }
 function applyEvents(response){
 	var events=JSON.parse(response);
+	if (events.newClientRequested==true){
+		$("span").html("Someone wants the client key");
+		requestDeleteClientKey();
+		//events.paused=true;
+	}
 	if (events.paused!=undefined)
 		player.setPaused(events.paused);
 	if (events.volume!=undefined)
 		player.setVolume(events.volume);
-	//TODO: Set quality, timestamp
+	//TODO: Set quality
+	if (events.timestamp!=undefined)
+		player.seek(events.timestamp);
 }
 function requestDeleteClientKey(){
-	/*if (player.currentTime!=undefined)
-		request("PUT","/api/queue/0/timestamp/"+player.currentTime(),auth,requestDeleteClientKey);
-	else
-		requestDeleteClientKey();*/
 	request("DELETE","/api/auth/client",auth,giveUpClientKey);
 	if (playbackStateInterval!=-1)
 		clearInterval(playbackStateInterval);
@@ -96,6 +101,9 @@ function requestDeleteClientKey(){
 	if (setTimestampInterval!=-1)
 		clearInterval(setTimestampInterval);
 	setTimestampInterval=-1;
+
+	player.destroy();
+	$("#player-parent").hide();
 }
 function giveUpClientKey(){
 	auth.client=undefined;
@@ -104,6 +112,3 @@ function giveUpClientKey(){
 	$("span").html("Gave up the client key");
 	$("button").prop('disabled', false);
 }
-
-
-//$("body").attr("onunload","requestDeleteClientKey();");

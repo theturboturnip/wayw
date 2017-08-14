@@ -1,6 +1,6 @@
 #!/usr/bin/env python 2.7
 
-import re,os,mimetypes,string,random,base64
+import re,os,mimetypes,string,random,base64,time
 from BaseHTTPServer import HTTPServer,BaseHTTPRequestHandler
 from json import dumps as json_encode,loads as json_parse
 
@@ -24,7 +24,9 @@ def Video(service="youtube",video_type="video",video_id="",timestamp=0):
 
 class WAYWServer(HTTPServer):
     client_key=""
+    last_client_key_use=-1
     control_key=""
+    last_control_key_use=-1
 
     queue=[
         Video(video_id="iPXqJ6zJxjU"),
@@ -50,19 +52,27 @@ class WAYWServer(HTTPServer):
         return control_key==self.control_key
 
     def is_b64_client_key(self,encoded):
-        return self.client_key!="" and encoded==base64.b64encode("Client:"+self.client_key)
+        if self.client_key!="" and encoded==base64.b64encode("Client:"+self.client_key):
+            self.last_client_key_use=time.time()
+            return True
+        return False
     def is_b64_control_key(self,encoded):
-        return self.control_key!="" and encoded==base64.b64encode("Control:"+self.control_key) 
+        if self.control_key!="" and encoded==base64.b64encode("Control:"+self.control_key):
+            self.last_control_key_use=time.time()
+            return True
+        return False
 
     def gen_client_key(self):
         self.client_key=gen_key()
         while self.client_key==self.control_key:
             self.client_key=gen_key()
+        self.last_client_key_use=-1
         return self.client_key
     def gen_control_key(self):
         self.control_key=gen_key()
         while self.control_key==self.client_key:
             self.control_key=gen_key()
+        self.last_control_key_use=-1
         return self.control_key
 
 
@@ -215,7 +225,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         else:
             self.wfile.write("none")
     def get_client_key(self):
-        if self.server.is_client_key(""):
+        if self.server.is_client_key("") or (self.server.last_client_key_use>0 and time.time()-self.server.last_client_key_use>10):
             self.positive_response()
             self.wfile.write(self.server.gen_client_key())
         else:
@@ -223,7 +233,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             self.server.playback_state["newClientRequested"]=True
             self.send_error(409)
     def get_control_key(self):
-        if self.server.is_control_key(""):
+        if self.server.is_control_key("") or (self.server.last_control_key_use>0 and time.time()-self.server.last_control_key_use>10):
             self.positive_response()
             ctrl_key=self.server.gen_control_key()
             #print ctrl_key
@@ -329,8 +339,8 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         self.server.client_key=""
         self.server.playback_state["newClientRequested"]=False
         self.server.playback_state_delta["newClientRequested"]=False
-        self.server.playback_state["paused"]=True
-        self.server.playback_state_delta["paused"]=True
+        #self.server.playback_state["paused"]=True
+        #self.server.playback_state_delta["paused"]=True
         self.send_response(204)
     def clear_control_key(self):
         self.require_control_auth()
