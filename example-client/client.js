@@ -78,6 +78,9 @@ function requestDeleteClientKey(){
 	if (playbackStateInterval!=-1)
 		clearInterval(playbackStateInterval);
 	playbackStateInterval=-1;
+	if (playbackEventInterval!=-1)
+		clearInterval(playbackEventInterval);
+	playbackEventInterval=-1;
 }
 function giveUpClientKey(){
 	auth.client=undefined;
