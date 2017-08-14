@@ -3,19 +3,19 @@
 ## Videos
 A video is defined as an object with 4 properties:
 
-1. service (string, can be youtube or twitch)
-2. type (string, can be video or stream. can only be stream if the service is twitch)
-3. id (string, the id of the video/vod/streamer being watched)
-4. timestamp (int, the number of seconds in to resume from)
+1. `service` (`string`, can be `youtube` or `twitch`)
+2. `type` (`string`, can be `video` or `stream`. can only be `stream` if the service is `twitch`)
+3. `id` (`string`, the id of the video/vod/streamer being watched)
+4. `timestamp` (`int`, the number of seconds in to resume from)
 
 ## Playback State
 The state of playback is returned from the server as a JSON object which can have the following attributes:
 
-1. paused (bool)
-2. volume (float between 0 and 1)
-3. quality (string, can be "high","medium","low", or "default" for player-controlled auto adjustment)
-4. timestamp (int)
-5. newClientRequested (bool). if true, the client should relinquish the video to a new client by PUT-ing the current timestamp on video 0 and DELETE-ing the client key.
+1. `paused` (`bool`)
+2. `volume` (`float` between 0 and 1)
+3. `quality` (`string`, can be `high`,`medium`,`low`, or `default` for player-controlled auto adjustment)
+4. `timestamp` (`int`)
+5. `newClientRequested` (`bool`). if true, the client should relinquish the video to a new client by PUT-ing the current timestamp on video 0 and DELETE-ing the client key.
 
 The change in state will be returned as a JSON object which can have any of the previous attributes.
 
