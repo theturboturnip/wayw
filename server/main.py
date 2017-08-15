@@ -45,6 +45,7 @@ class WAYWServer(HTTPServer):
 
     def __init__(self):
         HTTPServer.__init__(self,('',SERVER_PORT),WAYWRequestHandler)
+        #TODO: Load Queue
 
     def is_client_key(self,client_key):
         return client_key==self.client_key
@@ -97,22 +98,25 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         if not self.client_authed:
             if self.control_authed:
                 self.send_error(403)
-                raise
+                return False
             else:
                 self.send_error(401)
-                raise
+                return False
+        return True
     def require_control_auth(self):
         if not self.control_authed:
             if self.client_authed:
                 self.send_error(403)
-                raise
+                return False
             else:
                 self.send_error(401)
-                raise
+                return False
+        return True
     def require_either_auth(self):
         if not self.control_authed and not self.client_authed:
             self.send_error(401)
-            raise
+            return False
+        return True
 
             
     def do_GET(self):
@@ -129,6 +133,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             "/api/queue/":self.get_queue,
             "/api/queue/length/":self.get_queue_length,
             re.compile(r"\/api\/queue\/(\d+)\/"):self.get_queue_item,
+            "/api/queue/save/":self.save_queue,
         }, return_file=True)
     def do_POST(self):
         if 'content-length' in self.headers:
@@ -241,27 +246,37 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         else:
             self.send_error(409)
     def get_playback_state(self):
-        self.require_either_auth()
+        if not self.require_either_auth():
+            return
         self.positive_response()
         self.wfile.write(json_encode(self.server.playback_state))
     def get_playback_events(self):
-        self.require_client_auth()
+        if not self.require_client_auth():
+            return
         self.positive_response()
         self.wfile.write(json_encode(self.server.playback_state_delta))
         self.server.playback_state_delta={}
     def get_queue(self):
-        self.require_either_auth()
+        if not self.require_either_auth():
+            return
         self.positive_response()
         self.wfile.write(json_encode(self.server.queue))
     def get_queue_length(self):
-        self.require_either_auth()
+        if not self.require_either_auth():
+            return
         self.positive_response()
         self.wfile.write(str(len(self.server.queue)))
     def get_queue_item(self,match):
-        self.require_either_auth()
+        if not self.require_either_auth():
+            return
         index=self.clamp_queue_index(int(match.group(1)))
         self.positive_response()
         self.wfile.write(json_encode(self.server.queue[index]))
+    def save_queue(self):
+        if not self.require_either_auth():
+            return
+        #TODO: Save queue
+        
 
     """
     
@@ -269,7 +284,8 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
 
     """
     def apply_playback_state(self):
-        self.require_control_auth()
+        if not self.require_control_auth():
+            return
         try:
             playback_state_delta=json_parse(self.POST_data)
             if type(playback_state_delta) is not type({}):
@@ -287,7 +303,8 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         print self.server.playback_state
         self.send_response(204)
     def add_video_to_queue(self):
-        self.require_control_auth()
+        if not self.require_control_auth():
+            return
         try:
             video=json_parse(self.POST_data)
             if type(video) is not type({}) or "service" not in video or "id" not in video or "type" not in video:
@@ -304,6 +321,8 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         self.server.queue.append(video)
         self.send_response(204)
     def insert_video_in_queue(self,match):
+        if not self.require_control_auth():
+            return
         self.add_video_to_queue()
         self.reposition_queue_item(-1,int(match.group(1)))
 
@@ -313,7 +332,8 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
 
     """
     def reposition_queue_item_from_match(self,match):
-        self.require_control_auth()
+        if not self.require_control_auth():
+            return
         self.reposition_queue_item(int(match.group(1)),int(match.group(2)))
         self.send_response(204)
     def reposition_queue_item(self,index1,index2):
@@ -324,7 +344,8 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         self.server.queue.insert(index2,self.server.queue.pop(index2))
 
     def change_queue_item_timestamp(self,match):
-        self.require_client_auth()
+        if not self.require_client_auth():
+            return
         index=self.clamp_queue_index(int(match.group(1)))
         self.server.queue[index]["timestamp"]=int(match.group(2))
 
@@ -335,7 +356,8 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
 
     """
     def clear_client_key(self):
-        self.require_client_auth()
+        if not self.require_client_auth():
+            return
         self.server.client_key=""
         self.server.playback_state["newClientRequested"]=False
         self.server.playback_state_delta["newClientRequested"]=False
@@ -343,11 +365,13 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         #self.server.playback_state_delta["paused"]=True
         self.send_response(204)
     def clear_control_key(self):
-        self.require_control_auth()
+        if not self.require_control_auth():
+            return
         self.server.control_key=""
         self.send_response(204)
     def remove_queue_item(self,match):
-        self.require_either_auth()
+        if not self.require_either_auth():
+            return
         index=self.clamp_queue_index(int(match.group(1)))
         print self.server.queue,self.server
         self.server.queue.pop(index)
