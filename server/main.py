@@ -34,7 +34,7 @@ class WAYWServer(HTTPServer):
 
     queue=[
         Video(video_id="iPXqJ6zJxjU"),
-        Video(video_id="0jx3V4-_iXU",timestamp=0)
+        Video(video_id="0jx3V4-_iXU")
     ]
     queue_delta=[]
     

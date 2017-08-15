@@ -2,6 +2,7 @@ registerInterval=-1;
 playbackStateInterval=-1;
 playbackEventInterval=-1;
 setTimestampInterval=-1;
+getFirstVideoInterval=-1;
 auth={};
 
 function beginAttemptRegister(){
@@ -24,7 +25,7 @@ function acceptClientKey(response){
 
 	$("#controls").show();
 
-	request("GET","/api/queue/0",auth,getVideoToPlay);
+	getFirstVideoInterval=setInterval(function(){request("GET","/api/queue/0",auth,getVideoToPlay);},1000);
 }
 
 function getVideoToPlay(response){
@@ -39,6 +40,9 @@ function getVideoToPlay(response){
 		playbackEventInterval=setInterval(checkEvents,100);
 	if (setTimestampInterval==-1)
 		setTimestampInterval=setInterval(applyTimestamp,2000);
+	if (getFirstVideoInterval!=-1)
+		clearInterval(getFirstVideoInterval);
+	getFirstVideoInterval=-1;
 }
 function applyTimestamp(){
 	request("PUT","/api/queue/0/timestamp/"+Math.floor(player.currentTime()),auth);
