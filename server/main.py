@@ -4,6 +4,8 @@ import re,os,mimetypes,string,random,base64,time
 from BaseHTTPServer import HTTPServer,BaseHTTPRequestHandler
 from json import dumps as json_encode,loads as json_parse
 
+QUEUE_FILE_PATH="./queue.json"
+
 API_REQUEST_REGEX=re.compile(r"\/api\/.*")
 VIDEO_STRING_REGEX=re.compile(r"(youtube|twitch)#(video|stream):\/\/([a-zA-Z0-9]+)\/?(\d+)?")
 
@@ -48,7 +50,20 @@ class WAYWServer(HTTPServer):
 
     def __init__(self):
         HTTPServer.__init__(self,('',SERVER_PORT),WAYWRequestHandler)
-        #TODO: Load Queue
+        create_file=True
+        if (os.path.isfile(QUEUE_FILE_PATH)):
+            f=open(QUEUE_FILE_PATH,"r")
+            self.queue=json_parse(f.read())
+            f.close()
+            if type(self.queue) is not type([]):
+                print "Data present in queue file is bad."
+            else:
+                create_file=False
+        if create_file:
+            f=open(QUEUE_FILE_PATH,"w")
+            f.write("[]")
+            f.close()
+            self.queue=[]
 
     def is_client_key(self,client_key):
         return client_key==self.client_key
@@ -145,7 +160,6 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             self.POST_data=self.rfile.read(content_length)
         else:
             self.POST_data=""
-        #print "POST Data: "+self.POST_data
             
         self.do_request({
             "/api/playback/state/":self.apply_playback_state,
@@ -282,8 +296,12 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
     def save_queue(self):
         if not self.require_either_auth():
             return
-        #TODO: Save queue
         print "Saving Queue"
+        f=open(QUEUE_FILE_PATH,"w")
+        f.write(json_encode(self.server.queue))
+        f.close()
+        self.positive_response()
+        self.wfile.write(json_encode(self.server.queue))
 
     """
     

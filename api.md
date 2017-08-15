@@ -57,7 +57,7 @@ To submit a request with client authentication, use basic HTTP authentication us
 	/api/queue/ **[REQUIRES CLIENT/CONTROL AUTH]** : Get all the videos in the queue, including last used timestamps
 	/api/queue/length/ **[REQUIRES CLIENT/CONTROL AUTH]** : Get the length of the queue
 	/api/queue/%d/ **[REQUIRES CLIENT/CONTROL AUTH]** : Get the video at a specific index in the queue, including the last used timestamp
-	/api/queue/save/ **[REQUIRES CLIENT/CONTROL AUTH]** : Request that the queue be saved. Should be called once the control has finished modifying the queue, and when the client increments the video.
+	/api/queue/save/ **[REQUIRES CLIENT/CONTROL AUTH]** : Request that the queue be saved. Should be called once the control has finished modifying the queue, and when the client increments the video. Returns the complete queue.
 
 ### POST
 

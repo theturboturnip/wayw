@@ -1,2 +1,4 @@
 *~
 *.pyc
+*queue.json
+queue.json
