@@ -11,6 +11,8 @@ SERVER_PORT=6901
 SERVER_VERSION="1.0"
 REGEX_TYPE=type(API_REQUEST_REGEX)
 
+VERBOSE_LOG=False
+
 KEY_CHARS=string.ascii_letters+string.digits
 def gen_key(length=32):
     key=""
@@ -39,7 +41,8 @@ class WAYWServer(HTTPServer):
         "volume":1.0, #0.0->1.0 
         "quality":"default", #1080,720,480,360,240,default
         "timestamp":0, #seconds since the start
-        "newClientRequested":False
+        "newClientRequested":False,
+        "hasControl":False,
     }
     playback_state_delta={}
 
@@ -90,7 +93,8 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             return
         if key=="":
             return
-        print "Auth Key: "+key
+        if VERBOSE_LOG:
+            print "Auth Key: "+key
         self.client_authed=self.server.is_b64_client_key(key)
         self.control_authed=self.server.is_b64_control_key(key)
         
@@ -128,7 +132,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             "/api/auth/control/":self.get_control_key,
             
             "/api/playback/state/":self.get_playback_state,
-            "/api/playback/events/":self.get_playback_events,
+ "/api/playback/events/":self.get_playback_events,
             
             "/api/queue/":self.get_queue,
             "/api/queue/length/":self.get_queue_length,
@@ -164,9 +168,9 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         self.do_request({},return_file=True)
 
     def do_request(self,api_def,return_file=False):
-        print "\nNew Request"
-        
-        print self.path
+        if VERBOSE_LOG:
+            print "\nNew Request"
+            print self.path
         self.calc_auth()
 
         if API_REQUEST_REGEX.match(self.path):
@@ -186,9 +190,9 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             
         if return_file:
             file_path="."+self.path
-            print "Client wants "+file_path
+            #print "Client wants "+file_path
             if os.path.isfile(file_path):
-                print "Found "+file_path
+                #print "Found "+file_path
                 self.send_response(200)
                 self.send_header("content-type",mimetypes.guess_type(file_path)[0])
                 f=open(file_path,"rb")
@@ -199,8 +203,9 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
                     self.wfile.write(file_content)
                     f.close()
                 return
-            
-        print "Invalid Request"
+
+        if VERBOSE_LOG:
+            print "Invalid Request"
         self.send_error(404)
 
     def clamp_queue_index(self,index):
@@ -233,6 +238,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         if self.server.is_client_key("") or (self.server.last_client_key_use>0 and time.time()-self.server.last_client_key_use>10):
             self.positive_response()
             self.wfile.write(self.server.gen_client_key())
+            print "Client Key Distributed"
         else:
             self.server.playback_state_delta["newClientRequested"]=(not self.server.playback_state["newClientRequested"])
             self.server.playback_state["newClientRequested"]=True
@@ -240,9 +246,10 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
     def get_control_key(self):
         if self.server.is_control_key("") or (self.server.last_control_key_use>0 and time.time()-self.server.last_control_key_use>10):
             self.positive_response()
-            ctrl_key=self.server.gen_control_key()
-            #print ctrl_key
-            self.wfile.write(ctrl_key)
+            self.wfile.write(self.server.gen_control_key())
+            print "Control Key Distributed"
+            self.server.playback_state["hasControl"]=True
+            self.server.playback_state_delta["hasControl"]=True
         else:
             self.send_error(409)
     def get_playback_state(self):
@@ -276,7 +283,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         if not self.require_either_auth():
             return
         #TODO: Save queue
-        
+        print "Saving Queue"
 
     """
     
@@ -294,13 +301,11 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
             self.send_error(400,"The submitted data should be a JSON dictionary")
             return
         for key in playback_state_delta:
-            print key
             if key in self.server.playback_state and key!="newClientRequested":
                 if self.server.playback_state[key]!=playback_state_delta[key]:
                     self.server.playback_state_delta[key]=playback_state_delta[key]
-                print self.server.playback_state[key],playback_state_delta[key]
                 self.server.playback_state[key]=playback_state_delta[key]
-        print self.server.playback_state
+
         self.send_response(204)
     def add_video_to_queue(self):
         if not self.require_control_auth():
@@ -320,6 +325,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
                 return
         self.server.queue.append(video)
         self.send_response(204)
+        print "Added Video to Queue",video
     def insert_video_in_queue(self,match):
         if not self.require_control_auth():
             return
@@ -361,34 +367,37 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
         self.server.client_key=""
         self.server.playback_state["newClientRequested"]=False
         self.server.playback_state_delta["newClientRequested"]=False
-        #self.server.playback_state["paused"]=True
-        #self.server.playback_state_delta["paused"]=True
         self.send_response(204)
+        print "Cleared Client Key"
     def clear_control_key(self):
         if not self.require_control_auth():
             return
         self.server.control_key=""
         self.send_response(204)
+        print "Cleared Control Key"
+        self.server.playback_state["hasControl"]=False
+        self.server.playback_state_delta["hasControl"]=False
     def remove_queue_item(self,match):
         if not self.require_either_auth():
             return
         index=self.clamp_queue_index(int(match.group(1)))
-        print self.server.queue,self.server
         self.server.queue.pop(index)
         self.send_response(204)
+        print "Queue Item "+str(index)+" Removed"
 
     """
 
     HEAD FUNCTIONS
 
     """
-    def increment_queue(self):
-        if len(self.server.queue)>1:
-            self.server.queue.pop(0)
-            self.positive_response()
-            self.wfile.write(json_encode(self.server.queue[0]))
-        else:
-            self.send_error(403)
+    #def increment_queue(self):
+    #    if len(self.server.queue)>1:
+    #        self.server.queue.pop(0)
+    #        self.positive_response()
+    #        self.wfile.write(json_encode(self.server.queue[0]))
+    #        print "Queue Incremented"
+    #    else:
+    #        self.send_error(403)
 
 if __name__=='__main__':
     server=WAYWServer()

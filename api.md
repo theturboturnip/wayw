@@ -15,7 +15,8 @@ The state of playback is returned from the server as a JSON object which can hav
 - `volume` (`float` between 0 and 1)
 - `quality` (`string`, can be `high`,`medium`,`low`, or `default` for player-controlled auto adjustment)
 - `timestamp` (`int`)
-- `newClientRequested` (`bool`). if true, the client should relinquish the video to a new client by PUT-ing the current timestamp on video 0 and DELETE-ing the client key.
+- `newClientRequested` (`bool`) if true, the client should relinquish the video to a new client by PUT-ing the current timestamp on video 0 and DELETE-ing the client key.
+- `hasControl` (`bool`) If true, there's an external control which the client should respect by applying state changes and events.
 
 The change in state will be returned as a JSON object which can have any of the previous attributes.
 
