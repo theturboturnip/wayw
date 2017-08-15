@@ -69,11 +69,11 @@ function applyState(response){
 		state.paused=true;
 	}
 
-	player.setPaused(state.paused);
-	player.setVolume(state.volume);
-	//TODO: Set quality
-	/*if (Math.abs(state.timestamp-player.currentTime())>5)
-		player.seek(state.timestamp);*/
+	if (state.hasControl){
+		player.setPaused(state.paused);
+		player.setVolume(state.volume);
+		//TODO: Set quality, we shouldn't set timestamp from here
+	}
 }
 function applyEvents(response){
 	var events=JSON.parse(response);
@@ -82,6 +82,7 @@ function applyEvents(response){
 		requestDeleteClientKey();
 		//events.paused=true;
 	}
+
 	if (events.paused!=undefined)
 		player.setPaused(events.paused);
 	if (events.volume!=undefined)
