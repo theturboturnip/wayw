@@ -1,9 +1,10 @@
-function request(method,apiPath,auth,success,POSTdata){
+function request(method,apiPath,auth,success,POSTdata,error){
 	var ajax={
 		method:method,
 		url:apiPath,
 		success:success,
 		dataType:"text",
+		error:error
 	};
 	if (method=="POST" && POSTdata!=undefined)
 		ajax.data=POSTdata;
