@@ -94,6 +94,12 @@ class WAYWServer(HTTPServer):
         self.last_control_key_use=-1
         return self.control_key
 
+    def save_queue(self):
+        print "Saving Queue"
+        f=open(QUEUE_FILE_PATH,"w")
+        f.write(json_encode(self.server.queue))
+        f.close()
+
 
 class WAYWRequestHandler(BaseHTTPRequestHandler):
     client_authed=False
@@ -296,10 +302,7 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
     def save_queue(self):
         if not self.require_either_auth():
             return
-        print "Saving Queue"
-        f=open(QUEUE_FILE_PATH,"w")
-        f.write(json_encode(self.server.queue))
-        f.close()
+        self.server.save_queue()
         self.positive_response()
         self.wfile.write(json_encode(self.server.queue))
 
@@ -419,4 +422,9 @@ class WAYWRequestHandler(BaseHTTPRequestHandler):
 
 if __name__=='__main__':
     server=WAYWServer()
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print "KeyboardInterrupt, quitting"
+        server.save_queue()
+        quit()
