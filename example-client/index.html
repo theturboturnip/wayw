@@ -2,38 +2,33 @@
 	<head>
 		<title>WAYW Client</title>
 
+		<meta charset="UTF-8">
+		
 		<script src="https://www.youtube.com/iframe_api"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
 		<script src="/global-requests.js"></script>
+		<script defer src="/global-style.js"></script>
+		<link rel="stylesheet" href="/global-style.css">
 
-		 <script src="./client.js"></script>
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue-red.min.css">
+		<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+		<script defer src="./client.js"></script>
 		<script src="./player.js"></script>
-
 	</head>
+	
 	<body onunload="requestDeleteClientKey();">
-		<span id="message">Not the Client</span>
-		<br>
-		<button onclick="beginAttemptRegister();">Become the Client!</button>
-		<br><br>
-		<div id="controls" style="display:none">
-		<label><input id="paused-checkbox" type="checkbox" disabled>Paused</label>
-		<br>
-		<label><input id="volume-range" type="range" disabled>Volume</label>
-		<br>
-		<label><select id="quality-select" disabled>
-			<option value="default">Default</option>
-			<option value="low">Low</option>
-			<option value="medium">Medium</option>
-			<option value="high">High</option>
-		</select>
-		Quality
-		</label>
+
+		<div id="control-parent" class="centered" style="position:absolute;">
+			<button id="register-button" onclick="beginAttemptRegister();" ><span id="message"></span></button>
 		</div>
 
 
 		<div id="player-parent" style="position:absolute;left:0;right:0;top:0;bottom:0;background-color:#000;display:none;">
 			<div id="player"></div>
 		</div>
+		
 	</body>
 </html>

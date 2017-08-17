@@ -1,16 +1,22 @@
 var auth={};
 
+NO_CONTROL_MSG="request control";
+CONTROL_PENDING_MSG="getting control key...";
+HAS_CONTROL_MSG="relinquish control";
+RELINQUISHING_CONTROL_MSG="giving up control key...";
+
 function requestControl(){
+	$("#request-control-button > #message").html(CONTROL_PENDING_MSG);
 	request("GET","/api/auth/control",auth,getControlKey);
 }
 function getControlKey(response){
 	auth.control=response;
 
-	$("#message").html("We have control!");
-	$("#request-control-button").prop("disabled",true);
-	$("#relinquish-control-button").prop("disabled",false);
+	$("#request-control-button > #message").html(NO_CONTROL_MSG);
+	$("#relinquish-control-button > #message").html(HAS_CONTROL_MSG);
 
-	$("#controls").show();
+	$("#get-control-menu").hide();
+	$("#controls-menu").show();
 
 	//setInterval(function(){
 		request("GET","/api/playback/state",auth,applyCurrentState);
@@ -18,7 +24,7 @@ function getControlKey(response){
 }
 function applyCurrentState(response){
 	state=JSON.parse(response);
-	console.log(state);
+	//console.log(state);
 	$("#paused-checkbox").prop("checked",state.paused);
 	//console.log(document.getElementById("volume-range"));
 	$("#volume-range").val(100*state.volume);
@@ -33,15 +39,14 @@ function applyCurrentState(response){
 }
 
 function relinquishControl(){
+	$("#relinquish-control-button > #message").html(RELINQUISHING_CONTROL_MSG);
 	request("DELETE","/api/auth/control",auth,removeControlKey);
 }
 function removeControlKey(){
 	auth.control=undefined;
-	$("#controls").hide();
-
-	$("#message").html("We have given up control.");
-	$("#request-control-button").prop("disabled",false);
-	$("#relinquish-control-button").prop("disabled",true);
+	
+	$("#get-control-menu").show();
+	$("#controls-menu").hide();
 }
 
 
@@ -54,3 +59,6 @@ function updateVolume(value){
 function updateQuality(value){
 	request("POST","/api/playback/state",auth,undefined,JSON.stringify({"quality":value}));
 }
+
+
+$("#request-control-button > #message").html(NO_CONTROL_MSG);

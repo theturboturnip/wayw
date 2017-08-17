@@ -4,12 +4,17 @@ playbackEventInterval=-1;
 setTimestampInterval=-1;
 auth={};
 
+NOT_CLIENT_MSG="become the client";
+REQUESTING_KEY_MSG="requesting client key...";
+CLIENT_IDLE_MSG="waiting for a video...";
+RELINQUISHING_KEY_MSG="giving up client key...";
+
 function beginAttemptRegister(){
 	if (registerInterval!=-1) return;
 
 	registerInterval=setInterval(attemptRegister,500);
-	$("button").prop('disabled', true);
-	$("span").html("Requesting Client Key...");
+	$("button#register-button").prop('disabled', true);
+	$("#message").html(REQUESTING_KEY_MSG);
 }
 function attemptRegister(){
 	console.log("attempting register");
@@ -20,7 +25,7 @@ function acceptClientKey(response){
 	if (registerInterval!=-1)
 		clearInterval(registerInterval);
 	registerInterval=-1;
-	$("span").html("We're the client!");
+	$("#message").html(CLIENT_IDLE_MSG);
 
 	$("#controls").show();
 
@@ -66,7 +71,6 @@ function checkEvents(){
 function applyState(response){
 	var state=JSON.parse(response);
 	if (state.newClientRequested==true){
-		$("span").html("Someone wants the client key");
 		requestDeleteClientKey();
 		state.paused=true;
 	}
@@ -80,7 +84,6 @@ function applyState(response){
 function applyEvents(response){
 	var events=JSON.parse(response);
 	if (events.newClientRequested==true){
-		$("span").html("Someone wants the client key");
 		requestDeleteClientKey();
 		//events.paused=true;
 	}
@@ -94,6 +97,7 @@ function applyEvents(response){
 		player.seek(events.timestamp);
 }
 function requestDeleteClientKey(){
+	$("#message").html(RELINQUISHING_KEY_MSG);
 	request("DELETE","/api/auth/client",auth,giveUpClientKey);
 	if (playbackStateInterval!=-1)
 		clearInterval(playbackStateInterval);
@@ -112,6 +116,10 @@ function giveUpClientKey(){
 	auth.client=undefined;
 	$("#controls").hide();
 
-	$("span").html("Gave up the client key");
-	$("button").prop('disabled', false);
+	$("#message").html(NOT_CLIENT_MSG);
+	$("button#register-button").prop('disabled', false);
 }
+
+
+$("button#register-button").prop('disabled', false);
+$("#message").html(NOT_CLIENT_MSG);
