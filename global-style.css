@@ -4,3 +4,33 @@
 	transform: translate(-50%,-50%);
 	text-align:center;
 }
+.horiz-centered{
+	left:50%;
+	transform:translateX(-50%);
+	text-align:center;
+}
+
+.big-icon-button{
+	min-width:48px;
+	width:48px;
+	height:48px;
+}
+.big-icon-button .material-icons{
+	transform: translate(-24px,-24px);
+	font-size:48px;
+	line-height:48px;
+	width:48px;
+}
+
+/*.icon-button:hover{
+	background-color:transparent;
+	filter:brightness(80%);
+}*/
+
+.mdl-menu{
+	padding:0;
+}
+.mdl-menu__item {
+	line-height:32px;
+	height:32px;
+}

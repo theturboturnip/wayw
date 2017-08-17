@@ -5,6 +5,8 @@ CONTROL_PENDING_MSG="getting control key...";
 HAS_CONTROL_MSG="relinquish control";
 RELINQUISHING_CONTROL_MSG="giving up control key...";
 
+currentState={};
+
 function requestControl(){
 	$("#request-control-button > #message").html(CONTROL_PENDING_MSG);
 	request("GET","/api/auth/control",auth,getControlKey);
@@ -25,17 +27,28 @@ function getControlKey(response){
 function applyCurrentState(response){
 	state=JSON.parse(response);
 	//console.log(state);
-	$("#paused-checkbox").prop("checked",state.paused);
+	$("button#toggle-paused > i").html(state.paused?"pause":"play_arrow");
 	//console.log(document.getElementById("volume-range"));
-	$("#volume-range").val(100*state.volume);
+	if ($("#volume-range").get(0).MaterialSlider)
+		$("#volume-range").get(0).MaterialSlider.change(100*state.volume);
+	else
+		$("#volume-range").val(100*state.volume);
 	var val=0;
 	var selector=document.getElementById("quality-select");
-	for (var i=0;i<selector.options.length;i+=1){
-		if (selector.options[i].value==state.quality.trim())
-			val=i;
-		console.log(selector.options[i].value,state.quality);
+	if (selector){
+		for (var i=0;i<selector.options.length;i+=1){
+			if (selector.options[i].value==state.quality.trim())
+				val=i;
+			//console.log(selector.options[i].value,state.quality);
+		}
+		selector.selectedIndex=val;
 	}
-	selector.selectedIndex=val;
+
+	setTimeout(function(){
+		request("GET","/api/playback/state",auth,applyCurrentState);
+	},10*1000);
+	
+	currentState=state;
 }
 
 function relinquishControl(){
@@ -51,12 +64,15 @@ function removeControlKey(){
 
 
 function updatePaused(isPaused){
+	$("button#toggle-paused > i").html(isPaused?"pause":"play_arrow");
 	request("POST","/api/playback/state",auth,undefined,JSON.stringify({"paused":isPaused}));
+	currentState.paused=isPaused;
 }
 function updateVolume(value){
 	request("POST","/api/playback/state",auth,undefined,JSON.stringify({"volume":value}));
 }
 function updateQuality(value){
+	$("button#quality-opener").click();
 	request("POST","/api/playback/state",auth,undefined,JSON.stringify({"quality":value}));
 }
 

@@ -3,29 +3,27 @@
 		<title>WAYW Control</title>
 
 		<meta charset="UTF-8">
-		
+
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue-red.min.css">
+		<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 		<script src="https://www.youtube.com/iframe_api"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
 		<script src="/global-requests.js"></script>
 		<script defer src="/global-style.js"></script>
 		<link rel="stylesheet" href="/global-style.css">
-
-		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-		<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue-red.min.css">
-		<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
 		
 		<script defer src="./control.js"></script>
 		
 	</head>
-	<body onunload="relinquishControl();">
+	<body onunload="relinquishControl();" style="background-color:#fff">
 		<div id="get-control-menu" style="position:absolute" class="centered">
 			<button onclick="requestControl();" id="request-control-button"><span id="message">No Control</span></button>
 		</div>
 
-		<div id="controls-menu" style="display:none;position:absolute;" class="centered">
-			<button onclick="relinquishControl();" id="relinquish-control-button"><span id="message">No Control</span></button>
-			<br>
+		<div id="controls-menu" style="display:none;position:absolute;width:100%;top:10px;" class="horiz-centered">
+			<!-- <br>
 			<input id="paused-checkbox" type="checkbox" onchange="updatePaused(this.checked);"><label>Paused</label>
 			<br>
 			<input id="volume-range" type="range" onchange="updateVolume(this.value/100.0);"><label>Volume</label>
@@ -39,6 +37,45 @@
 			<label>
 				Quality
 			</label>
+			-->
+
+
+			<div id="icon-bar" style="width:100%;height:48px;vertical-align:middle">
+				<button type="icon" id="toggle-paused" onclick="updatePaused(!currentState.paused);" big style="left:0;position:absolute;">
+					<i class="material-icons">play_arrow</i>
+				</button>
+				<button type="icon" id="quality-opener" onclick="" style="left:48px;position:absolute;transform:translateY(8px);">
+					<i class="material-icons">settings</i>
+				</button>
+				<ul type="menu" for="quality-opener">
+					<li onclick="updateQuality('default');">Default</li>
+					<li onclick="updateQuality('1080');">1080p</li>
+					<li onclick="updateQuality('720');">720p</li>
+					<li onclick="updateQuality('480');">480p</li>
+					<li onclick="updateQuality('360');">360p</li>
+					<li onclick="updateQuality('240');">240p</li>
+				</ul>
+				<div style="position:absolute;margin:0 -16px;left:80px;right:212px;height:48px;z-index:-1;">
+					<div style="width:100%;position:relative;top:24px;transform:translateY(-50%);">
+						<input id="playback-range" type="range" min="0" max="100" value="25">
+					</div>
+				</div>
+				<div style="position:absolute;right:0;transform:translateY(12px);">
+
+					<i class="material-icons" style="float:left;">volume_up</i>
+					<p style="width:200px;float:left;transform:translateY(3px);margin-left:-20px">
+						<input id="volume-range" onchange="updateVolume(this.value/100.0);" type="range" min="0" max="100" value="0">
+					</p>
+				</div>
+			</div>
+
+			<button onclick="relinquishControl();" id="relinquish-control-button"><span id="message">No Control</span></button>
+
 		</div>
+		<script>
+		 /*$("#quality-opener").click(function(event){
+			 $(event.currentTarget).toggleClass(
+		 });*/
+		</script>
 	</body>
 </html>
