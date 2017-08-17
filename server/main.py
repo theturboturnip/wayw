@@ -97,7 +97,7 @@ class WAYWServer(HTTPServer):
     def save_queue(self):
         print "Saving Queue"
         f=open(QUEUE_FILE_PATH,"w")
-        f.write(json_encode(self.server.queue))
+        f.write(json_encode(self.queue))
         f.close()
 
 
