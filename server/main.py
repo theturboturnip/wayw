@@ -53,7 +53,10 @@ class WAYWServer(HTTPServer):
         create_file=True
         if (os.path.isfile(QUEUE_FILE_PATH)):
             f=open(QUEUE_FILE_PATH,"r")
-            self.queue=json_parse(f.read())
+            try:
+                self.queue=json_parse(f.read())
+            except:
+                self.queue=None
             f.close()
             if type(self.queue) is not type([]):
                 print "Data present in queue file is bad."

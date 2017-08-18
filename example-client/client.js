@@ -31,6 +31,15 @@ function acceptClientKey(response){
 
 	//getFirstVideoInterval=setInterval(function(){request("GET","/api/queue/0",auth,getVideoToPlay);},1000);
 	requestNextVideo();
+	verify();
+}
+function verify(){
+	request("GET","/api/auth/verify",auth,function(response){
+		if (response!="client")
+			giveUpClientKey();
+		else
+			setTimeout(verify,5*1000);
+	},undefined,giveUpClientKey);
 }
 
 function requestNextVideo(){
@@ -66,7 +75,7 @@ function checkState(){
 	request("GET","/api/playback/state",auth,applyState);
 }
 function checkEvents(){
-	request("GET","/api/playback/events",auth,applyEvents);
+	request("GET","/api/playback/events",auth,applyEvents,undefined,console.log);
 }
 function applyState(response){
 	var state=JSON.parse(response);

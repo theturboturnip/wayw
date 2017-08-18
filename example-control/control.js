@@ -9,11 +9,16 @@ currentState={};
 
 function requestControl(){
 	$("#request-control-button > #message").html(CONTROL_PENDING_MSG);
-	request("GET","/api/auth/control",auth,getControlKey);
+	request("GET","/api/auth/control",auth,getControlKey,undefined,function(){
+		setTimeout(requestControl,1000);
+	});
+	$("#request-control-button").prop("disabled",true);
 }
 function getControlKey(response){
 	auth.control=response;
 
+	$("#relinquish-control-button").prop("disabled",false);
+	
 	$("#request-control-button > #message").html(NO_CONTROL_MSG);
 	$("#relinquish-control-button > #message").html(HAS_CONTROL_MSG);
 
@@ -23,6 +28,16 @@ function getControlKey(response){
 	//setInterval(function(){
 		request("GET","/api/playback/state",auth,applyCurrentState);
 	//},1000);
+
+	verify();
+}
+function verify(){
+	request("GET","/api/auth/verify",auth,function(response){
+		if (response!="control")
+			removeControlKey();
+		else
+			setTimeout(verify,5*1000);
+	},undefined,removeControlKey);
 }
 function applyCurrentState(response){
 	state=JSON.parse(response);
@@ -57,9 +72,14 @@ function relinquishControl(){
 }
 function removeControlKey(){
 	auth.control=undefined;
-	
+
+	$("#request-control-button").prop("disabled",false);
+
 	$("#get-control-menu").show();
 	$("#controls-menu").hide();
+
+	if (keepAliveInterval>-1)
+		clearInterval(keepAliveInterval);
 }
 
 
@@ -78,3 +98,4 @@ function updateQuality(value){
 
 
 $("#request-control-button > #message").html(NO_CONTROL_MSG);
+	$("#request-control-button").prop("disabled",false);

@@ -27,10 +27,40 @@
 	filter:brightness(80%);
 }*/
 
-.mdl-menu{
+.mdl-menu[condensed]{
 	padding:0;
 }
-.mdl-menu__item {
+.mdl-menu[condensed] > .mdl-menu__item {
 	line-height:32px;
 	height:32px;
 }
+
+
+.potential-spin{
+	transition: transform ease 1s;
+}
+.spin{
+	transform: rotate(360deg);
+}
+
+ul[type=horizontal]{
+	overflow:auto;
+	display: block;
+	white-space:nowrap;
+}
+ul[type=horizontal] > li{
+	display:inline-block;
+}
+
+.video-container{
+	width:200px;
+	height:100px;
+}
+.potential-video-container{
+	border-style:dashed;
+	border-color:#ccc;
+	border-width:3px;
+	text-align:center;
+	vertical-align:middle;
+}
+
