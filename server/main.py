@@ -1,4 +1,4 @@
-#!/usr/bin/env python 2.7
+#!/usr/bin/env python2.7
 
 import re,os,mimetypes,string,random,base64,time
 from BaseHTTPServer import HTTPServer,BaseHTTPRequestHandler

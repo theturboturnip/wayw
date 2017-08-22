@@ -1,0 +1,178 @@
+<html>
+	<head>
+		<title>WAYW Control</title>
+
+		<meta charset="UTF-8">
+
+		<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+		<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.blue-red.min.css">
+		<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+		<script src="https://www.youtube.com/iframe_api"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css">
+		<link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/GoogleChrome/dialog-polyfill/00f09fb7/dialog-polyfill.css"/>
+		<script src="https://cdn.rawgit.com/GoogleChrome/dialog-polyfill/00f09fb7/dialog-polyfill.js"></script>
+		<script src="https://apis.google.com/js/platform.js"></script>
+		<link rel="stylesheet" href="https://cdn.rawgit.com/kybarg/mdl-selectfield/mdl-menu-implementation/mdl-selectfield.min.css">
+		
+		<script src="/global/requests.js"></script>
+		<script src="/global/google.js"></script>
+		<script defer src="/global/style.js"></script>
+		<link rel="stylesheet" href="/global/style.css">
+		
+		<script defer src="./control.js"></script>
+		<script src="./video-view.js"></script>
+	</head>
+	<body onunload="relinquishControl();" style="background-color:#fff">
+		<div id="get-control-menu" style="position:absolute" class="centered">
+			<button onclick="requestControl();" id="request-control-button"><span id="message">No Control</span></button>
+		</div>
+
+		<div id="controls-menu" style="display:none;position:absolute;width:100%;top:10px;bottom:0px;" class="horiz-centered">
+			<div id="icon-bar" style="position:relative;min-width:100px;max-width:1000px;height:48px;vertical-align:middle" class="horiz-centered">
+				<button type="icon" id="toggle-paused" onclick="updatePaused(!currentState.paused);" big style="left:0;position:absolute;">
+					<i>play_arrow</i>
+				</button>
+				<button type="icon" id="quality-opener" onclick="" style="left:48px;position:absolute;top:8px;">
+					<i>settings</i>
+				</button>
+				<ul type="menu" for="quality-opener" condensed>
+					<li onclick="updateQuality('default');">Default</li>
+					<li onclick="updateQuality('1080');">1080p</li>
+					<li onclick="updateQuality('720');">720p</li>
+					<li onclick="updateQuality('480');">480p</li>
+					<li onclick="updateQuality('360');">360p</li>
+					<li onclick="updateQuality('240');">240p</li>
+				</ul>
+				<div style="position:absolute;left:80px;right:169px;height:48px;z-index:-1;">
+					<div style="width:100%;position:relative;top:24px;transform:translateY(-50%);">
+						<input id="playback-range" type="range" min="0" max="100" value="25" style="width:100%;margin: 0;">
+					</div>
+				</div>
+				<div style="position:absolute;right:0;transform:translateY(12px);">
+					<i style="float:left;">volume_up</i>
+					<div style="width:150px;float:left;top:50%;margin-left:-5px;">
+						<input id="volume-range" onchange="updateVolume(this.value/100.0);" type="range" min="0" max="100" value="0" style="width:100%;margin:0;">
+					</div>
+				</div>
+			</div>
+			<hr>
+			<div class="horiz-centered" id="queue-display" style="position:relative;text-align:left;min-width:100px;max-width:1000px;z-index:-1;">
+				<h3 style="margin:0;">Queue</h3>
+				<ul type="horizontal" style="width:100%;margin:0;padding: 16px 0;padding-left:20px;left:-20px;position:relative;">
+					<li class="potential-video-container"></li>
+				</ul>
+			</div>
+			<hr>
+			<div id="search-settings">
+				<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label" style="">
+					<input class="mdl-textfield__input" type="text" id="search-input" onkeyup="if (event.keyCode==13){updateVideoView();return false;}" style="padding-right:32px !important;">
+					<label class="mdl-textfield__label" for="search-input">Search</label>
+					<button type="icon" grey class="mdl-textfield__label__icon" style="position:absolute;right:0;top:20px;width:30px;height:30px;" onclick="updateVideoView();"><i>search</i></button>
+				</div>
+				<br>
+				<div style="position:relative;top:-10px;height:30px">
+					Search for
+					<div class="mdl-textfield mdl-js-textfield" style="text-align:center;display:inline;width:20px;font-size:16px;">
+						<input class="mdl-textfield__input" type="text" id="video-count" pattern="[0-9]*(\.[0-9]+)?" style="text-align:center;display:inline;width:40px;font-size:16px;" value="50">
+						<span class="mdl-textfield__error">Input is not a number!</span>
+					</div>
+					videos from
+					<select dynamic id="channel-filter" style="display:inline;font-size:16px;text-align:center">
+						<option value="all">all channels</option>
+						<option value="subscribed">all channels I'm subscribed to</option>
+						<option value="specific">these channels:</option>
+					</select>
+					<div id="channel-name-input-container" class="mdl-textfield mdl-js-textfield" style="width:200px;padding-top:0;">
+						<input class="mdl-textfield__input" type="text" id="channel-name-input" onkeyup="if (event.keyCode==13){return false;}">
+						<label class="mdl-textfield__label" for="channel-name-input" style="top:4px;">Channels</label>
+					</div>
+					ordered by
+					<select dynamic id="sort-filter" style="display:inline;font-size:16px;text-align:center">
+						<option value="relevance">relevance</option>
+						<option value="date">date</option>
+					</select>
+				</div>
+				<div id="login" style="float:right;padding:17px;">
+					<button raised id="login-request-button">Login</button>
+				</div>
+			</div>
+			<div id="video-view" type="grid" class="horiz-center" style="left:50%;transform:translateX(-50%);position:relative;">
+				<!-- 164hJoIgSCQ  5vDPjzTZMBc -->
+				<!-- 
+				<div class="video-container">
+					<img src="http://img.youtube.com/vi/164hJoIgSCQ/mqdefault.jpg">
+					<div id="content">
+						<span id="title">Video title hear</span>
+						<br>
+						<a id="channel" href="">Channel name</a>
+						<div id="time">12:50</div>
+					</div>
+				</div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>
+				<div class="video-container"></div>-->
+			</div>
+			
+			<div id="bottom-bar-pad" style="position:relative;top:0;height:64px;width:100%;"></div>
+		</div>
+		<div id="bottom-bar" style="position:fixed;bottom:0;height:64px;background-color:#ddd;left: 0;right: 0;display:none;">
+			<div id="bottom-content" class="horiz-centered" style="padding:14px 0;position:relative">
+				<button onclick="relinquishControl();" raised="" id="relinquish-control-button" class="mdl-button mdl-js-button mdl-js-ripple-effect mdl-button--primary mdl-button--raised" data-upgraded=",MaterialButton,MaterialRipple">
+					<span id="message">relinquish control</span>
+					<span class="mdl-button__ripple-container"><span class="mdl-ripple"></span></span></button>
+			</div>
+		</div>
+		<script>
+		 $("#quality-opener").addClass("potential-spin").click(function(event){
+			 $(event.currentTarget).toggleClass("spin");
+		 });
+		 $("#channel-name-input-container").hide();
+		 $("#channel-filter").on("change",function(){
+			 if (this.value=="specific") $("#channel-name-input-container").show();
+			 else $("#channel-name-input-container").hide();
+		 });
+		 $("#channel-filter").val("all");
+
+		 function applyLoginStyle(){
+			 $("#login-request-button").hide();
+		 }
+		</script>
+	</body>
+</html>

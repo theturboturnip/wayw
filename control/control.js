@@ -24,6 +24,7 @@ function getControlKey(response){
 
 	$("#get-control-menu").hide();
 	$("#controls-menu").show();
+	$("#bottom-bar").show();
 
 	//setInterval(function(){
 		request("GET","/api/playback/state",auth,applyCurrentState);
@@ -73,13 +74,12 @@ function relinquishControl(){
 function removeControlKey(){
 	auth.control=undefined;
 
+	$("#request-control-button > #message").html(NO_CONTROL_MSG);
 	$("#request-control-button").prop("disabled",false);
 
 	$("#get-control-menu").show();
 	$("#controls-menu").hide();
-
-	if (keepAliveInterval>-1)
-		clearInterval(keepAliveInterval);
+	$("#bottom-bar").hide();
 }
 
 
@@ -97,5 +97,4 @@ function updateQuality(value){
 }
 
 
-$("#request-control-button > #message").html(NO_CONTROL_MSG);
-	$("#request-control-button").prop("disabled",false);
+removeControlKey();
